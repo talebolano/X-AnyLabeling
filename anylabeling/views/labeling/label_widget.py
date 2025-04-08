@@ -5975,6 +5975,7 @@ class LabelingWidget(LabelDialog):
                 "type"
             ] in [
                 "segment_anything_2_video",
+                "geco_run_all_images"
             ]:
                 self.run_tracker = True
                 self.show_progress_dialog_and_process()
@@ -6159,6 +6160,7 @@ class LabelingWidget(LabelDialog):
                 "yolo11_seg_track",
                 "yolo11_obb_track",
                 "yolo11_pose_track",
+                "geco_run_all_images"
             ]
 
             # Update the progress dialog

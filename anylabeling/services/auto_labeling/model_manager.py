@@ -89,6 +89,7 @@ class ModelManager(QObject):
         "yolo11_pose_track",
         "upn",
         "geco",
+        "geco_run_all_images"
     ]
 
     model_configs_changed = pyqtSignal(list)
@@ -1966,6 +1967,35 @@ class ModelManager(QObject):
                     f"❌ Error in loading model `{model_config['type']}` with error: {str(e)}"
                 )
                 return
+        elif model_config["type"] == "geco_run_all_images":
+            from .geco import GeCoRunAllImages
+
+            def _load_geco_run_all_images():
+                logger.info(f"⌛ Loading model: {model_config['type']}")
+                model_config["model"] = GeCoRunAllImages(
+                    model_config, on_message=self.new_model_status.emit
+                )
+                self.auto_segmentation_model_unselected.emit()
+                logger.info(
+                    f"✅ Model loaded successfully: {model_config['type']}"
+                )
+
+            try:
+                with TimeoutContext(
+                    timeout=300,
+                    timeout_message="""Model loading timeout! Please check your network connection.
+                                    Alternatively, you can try to load the model from local directory.""",
+                ) as ctx:
+                    _ = ctx.run(_load_geco_run_all_images)
+            except Exception as e:  # noqa
+                self.new_model_status.emit(
+                    self.tr(f"Error in loading model: {str(e)}")
+                )
+                logger.error(
+                    f"❌ Error in loading model `{model_config['type']}` with error: {str(e)}"
+                )
+                return
+
         else:
             raise Exception(f"Unknown model type: {model_config['type']}")
 
@@ -1975,7 +2005,7 @@ class ModelManager(QObject):
     def set_cache_auto_label(self, text, gid):
         """Set cache auto label"""
         valid_models = [
-            "segment_anything_2_video",
+            "segment_anything_2_video","geco_run_all_images"
         ]
         if (
             self.loaded_model_config is not None
@@ -2001,6 +2031,7 @@ class ModelManager(QObject):
             "edge_sam",
             "florence2",
             "geco",
+            "geco_run_all_images"
         ]
         if (
             self.loaded_model_config is None
@@ -2024,6 +2055,7 @@ class ModelManager(QObject):
             "yolo11_seg_track",
             "yolo11_obb_track",
             "yolo11_pose_track",
+            "geco_run_all_images"
         ]
         if (
             self.loaded_model_config is None
@@ -2166,7 +2198,7 @@ class ModelManager(QObject):
             ].set_auto_labeling_preserve_existing_annotations_state(state)
 
     def set_auto_labeling_prompt(self):
-        model_list = ["segment_anything_2_video"]
+        model_list = ["segment_anything_2_video","geco_run_all_images"]
         if (
             self.loaded_model_config is not None
             and self.loaded_model_config["type"] in model_list
@@ -2297,6 +2329,7 @@ class ModelManager(QObject):
             "grounding_sam2",
             "edge_sam",
             "geco",
+            "geco_run_all_images"
         ]:
             return
 
