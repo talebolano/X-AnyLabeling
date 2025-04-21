@@ -187,7 +187,6 @@ class GeCo(Model):
             "display_name",
             "encoder_model_path",
             "decoder_model_path",
-            "encoder_data_path",
         ]
         widgets = [
             "button_add_rect",
@@ -206,18 +205,6 @@ class GeCo(Model):
         self.box_threshold = self.config.get("box_threshold", 4)
 
         # Get encoder and decoder model paths
-        encoder_data_abs_path = self.get_model_abs_path(
-            self.config, "encoder_data_path"
-        )
-        if not encoder_data_abs_path or not os.path.isfile(
-            encoder_data_abs_path
-        ):
-            raise FileNotFoundError(
-                QCoreApplication.translate(
-                    "Model",
-                    "Could not download or initialize encoder data of GeCo.",
-                )
-            )
         encoder_model_abs_path = self.get_model_abs_path(
             self.config, "encoder_model_path"
         )
@@ -298,7 +285,9 @@ class GeCo(Model):
 
             bboxes = self.model.predict_bboxes(image_embedding, self.marks)
             for det_bbox in bboxes:
-                shapes.append(self.post_process(det_bbox, img_h, img_w))
+                det_shape = self.post_process(det_bbox, img_h, img_w)
+                if det_shape != None:
+                    shapes.append(det_shape)
 
         except Exception as e:  # noqa
             logger.warning("Could not inference model")
@@ -365,6 +354,9 @@ class GeCo(Model):
         y_min = min(max(bbox[1], 0), img_h - 1)
         x_max = min(max(bbox[2], 0), img_w - 1)
         y_max = min(max(bbox[3], 0), img_h - 1)
+
+        if x_min >= x_max or y_min >= y_max:
+            return None
 
         # Create shape
         shape = Shape(flags={})
@@ -563,7 +555,6 @@ class GeCoRunAllImages(GeCo):
             "encoder_model_path",
             "protos_model_path",
             "decoder_model_path",
-            "encoder_data_path",
         ]
         widgets = [
             "button_add_rect",
@@ -583,18 +574,6 @@ class GeCoRunAllImages(GeCo):
         self.box_threshold = self.config.get("box_threshold", 4)
 
         # Get encoder and decoder model paths
-        encoder_data_abs_path = self.get_model_abs_path(
-            self.config, "encoder_data_path"
-        )
-        if not encoder_data_abs_path or not os.path.isfile(
-            encoder_data_abs_path
-        ):
-            raise FileNotFoundError(
-                QCoreApplication.translate(
-                    "Model",
-                    "Could not download or initialize encoder data of GeCo.",
-                )
-            )
         encoder_model_abs_path = self.get_model_abs_path(
             self.config, "encoder_model_path"
         )
@@ -729,7 +708,10 @@ class GeCoRunAllImages(GeCo):
                 prototype_embeddings = self.model.get_protos(image_embedding, self.marks)
                 bboxes = self.model.predict_bboxes(image_embedding, prototype_embeddings)
                 for det_bbox in bboxes:
-                    shapes.append(self.post_process(det_bbox, img_h, img_w))
+                    det_shape = self.post_process(det_bbox, img_h, img_w)
+                    if det_shape != None:
+                        shapes.append(det_shape)
+
             else:
                 #print("tracker")
                 if self.is_first_init:
@@ -745,7 +727,9 @@ class GeCoRunAllImages(GeCo):
                     bboxes = self.model.predict_bboxes(image_embedding, self.prototype_embeddings)
 
                     for det_bbox in bboxes:
-                        shapes.append(self.post_process(det_bbox, img_h, img_w, label=self.label))
+                        det_shape = self.post_process(det_bbox, img_h, img_w)
+                        if det_shape != None:
+                            shapes.append(det_shape)
 
         except Exception as e:  # noqa
             logger.warning("Could not inference model")
@@ -765,6 +749,9 @@ class GeCoRunAllImages(GeCo):
         y_min = min(max(bbox[1], 0), img_h - 1)
         x_max = min(max(bbox[2], 0), img_w - 1)
         y_max = min(max(bbox[3], 0), img_h - 1)
+
+        if x_min >= x_max or y_min >= y_max:
+            return None
 
         # Create shape
         shape = Shape(flags={})
