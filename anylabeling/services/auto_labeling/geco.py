@@ -153,6 +153,8 @@ class GeCoONNX:
         )  # add border
         cv_image = np.transpose(cv_image / 255.0, axes=(2, 0, 1))[None]
 
+        cv_image = (cv_image - np.array([0.485, 0.456, 0.406])[None,:,None,None]) / np.array([0.229, 0.224, 0.225])[None,:,None,None]
+
         encoder_inputs = {
             self.encoder_input_name: cv_image.astype(np.float32),
         }
@@ -513,6 +515,10 @@ class GeCoRunAllImagesONNX(GeCoONNX):
         )  # add border
         cv_image = np.transpose(cv_image / 255.0, axes=(2, 0, 1))[None]
 
+        # normalize
+        cv_image = (cv_image - np.array([0.485, 0.456, 0.406])[None,:,None,None]) / np.array([0.229, 0.224, 0.225])[None,:,None,None]
+        #img = T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(img).unsqueeze(0)
+
         encoder_inputs = {
             self.encoder_input_name: cv_image.astype(np.float32),
         }
@@ -727,7 +733,7 @@ class GeCoRunAllImages(GeCo):
                     bboxes = self.model.predict_bboxes(image_embedding, self.prototype_embeddings)
 
                     for det_bbox in bboxes:
-                        det_shape = self.post_process(det_bbox, img_h, img_w)
+                        det_shape = self.post_process(det_bbox, img_h, img_w, label=self.label)
                         if det_shape != None:
                             shapes.append(det_shape)
 
